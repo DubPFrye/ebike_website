@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Battery Configurator | FryePower</title>
+<meta name="description" content="Configure an e-bike battery pack: pick cells and a series/parallel layout, see the enclosure parts, and download the build files.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&display=swap">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .app { padding: 48px 0 80px; }
+  .app .wrap { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .app .wrap { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .panel h2 { font-size: 1.05rem; margin: 0 0 14px; }
+  .panel + .panel { margin-top: 18px; }
+
+  .field { display: grid; gap: 6px; margin-bottom: 16px; }
+  .field label { font-weight: 600; font-size: .92rem; display: flex; justify-content: space-between; }
+  .field output { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .field select, .field input[type=range], .field input[type=number] { width: 100%; font: inherit; }
+  .field select, .field input[type=number] { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  .field input[type=range] { accent-color: var(--accent); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .check { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: .92rem; margin-bottom: 8px; cursor: pointer; }
+  .check input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+  .pair.off { opacity: .45; }
+  .hint { color: var(--muted); font-size: .85rem; margin: 0; }
+
+  .main-col { display: grid; gap: 18px; min-width: 0; }
+  .main-col .panel + .panel { margin-top: 0; }
+  .preview { aspect-ratio: 16 / 7; display: grid; place-items: center; background: var(--bg); border-radius: 10px; border: 1px dashed var(--line); overflow: hidden; }
+  .preview svg { width: 100%; height: 100%; }
+  .preview .cell { fill: color-mix(in srgb, var(--accent) 22%, var(--surface)); stroke: color-mix(in srgb, var(--accent) 60%, transparent); stroke-width: 1.5; }
+  .preview .group { fill: none; stroke: var(--muted); stroke-opacity: .35; stroke-dasharray: 3 3; }
+  .preview .lbl { fill: var(--muted); font-size: 11px; font-family: inherit; }
+
+  .status { border-radius: 10px; padding: 12px 14px; margin: 0 0 14px; font-size: .92rem; }
+  .status ul { margin: 6px 0 0; padding-left: 1.2em; }
+  .status.error { background: color-mix(in srgb, #d64545 14%, var(--surface)); border: 1px solid color-mix(in srgb, #d64545 45%, transparent); }
+  .status.warn { background: color-mix(in srgb, #d99a1e 14%, var(--surface)); border: 1px solid color-mix(in srgb, #d99a1e 45%, transparent); }
+  .status[hidden] { display: none; }
+
+  .specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 0; }
+  .spec { background: var(--bg); border-radius: 10px; padding: 12px 14px; }
+  .spec dt { font-size: .8rem; color: var(--muted); }
+  .spec dd { margin: 2px 0 0; font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .spec dd small { font-size: .8rem; font-weight: 500; color: var(--muted); }
+
+  .parts { display: grid; gap: 14px; }
+  .part-card { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 14px; align-items: center; background: var(--bg); border-radius: 10px; padding: 12px; }
+  @media (max-width: 600px) { .part-card { grid-template-columns: 1fr; } }
+  .part-card svg { display: block; width: 100%; height: auto; }
+  .spec.wide { grid-column: span 2; }
+  .part-card .part { fill: color-mix(in srgb, var(--accent) 16%, var(--surface)); stroke: var(--text); stroke-width: .6; }
+  .part-card h3 { margin: 0 0 4px; font-size: .95rem; }
+  .part-card p { margin: 0; color: var(--muted); font-size: .85rem; }
+
+  table.bom { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  .bom th, .bom td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .bom th { color: var(--muted); font-weight: 600; }
+  .bom td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bom td small { display: block; color: var(--muted); }
+  .bom-wrap { overflow-x: auto; }
+
+  .downloads { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 10px; }
+  .downloads li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; }
+  .downloads span small { display: block; color: var(--muted); font-size: .82rem; }
+  .downloads .btn { padding: 8px 14px; font-size: .9rem; }
+  .note { font-size: .85rem; color: var(--muted); margin: 14px 0 0; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../" aria-label="FryePower home">
+      <svg viewBox="49 48 1065 355" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M86,340 L151,340 L208,241 L304,241 L334,187 L236,187 L285,103 L584,103 L597,136 L567,187 L473,187 L506,125 L443,125 L320,340 L383,340 L440,241 L491,241 L532,340 L598,340 L558,241 L600,241 L659,140 L623,49 L253,49 Z M874,49 L810,49 L749,155 L705,49 L645,49 L714,217 L631,360 L73,360 L50,402 L672,402 Z M1113,49 L898,49 L706,381 L696,402 L911,402 L942,346 L793,346 L820,295 L852,241 L955,241 L986,187 L883,187 L932,103 L1083,103 Z"/></svg>
+      <span class="power" aria-hidden="true">POWER</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="../#parts">Parts</a></li>
+        <li class="hide-sm"><a href="../#about">About</a></li>
+        <li class="hide-sm"><a href="../#contact">Contact</a></li>
+        <li><a class="nav-cta" href="./" aria-current="page">Configure<span class="hide-sm"> a pack</span></a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero compact">
+    <div class="wrap">
+      <span class="badge">Preview</span>
+      <h1>Battery configurator</h1>
+      <p>Pick a cell and a series/parallel layout. The enclosure, parts and bill of materials update as you go, and you can download the build files.</p>
+    </div>
+  </section>
+
+  <section class="app">
+    <div class="wrap">
+      <aside>
+        <div class="panel">
+          <h2>Pack setup</h2>
+          <div class="field">
+            <label for="cell">Cell</label>
+            <select id="cell"></select>
+          </div>
+          <div class="field">
+            <label for="series">Series (S) <output id="seriesOut" for="series"></output></label>
+            <input id="series" type="range" min="2" max="30" value="20">
+            <p class="hint">Sets the voltage. 10S ≈ 36 V, 13S ≈ 48 V, 14S ≈ 52 V, 20S ≈ 72 V.</p>
+          </div>
+          <div class="field">
+            <label for="parallel">Parallel (P) <output id="parallelOut" for="parallel"></output></label>
+            <input id="parallel" type="range" min="1" max="12" value="4">
+            <p class="hint">Sets the capacity and how much current the pack can supply.</p>
+          </div>
+          <div class="field">
+            <label for="pitch">Cell holder spacing</label>
+            <select id="pitch"></select>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Mounting</h2>
+          <label class="check"><input id="baseplate" type="checkbox" checked> Aluminum base plate</label>
+          <p class="hint" style="margin-bottom:12px" id="baseHint">The pack's side-plate hooks latch into a base plate that bolts to the frame. Set how far it reaches past the pack.</p>
+          <div class="pair" id="basePair">
+            <div class="field"><label for="front">Front (mm)</label><input id="front" type="number" min="0" max="200" step="1"></div>
+            <div class="field"><label for="rear">Rear (mm)</label><input id="rear" type="number" min="0" max="200" step="1"></div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="main-col">
+        <div class="panel">
+          <h2 id="packTitle">Pack layout</h2>
+          <div class="status warn" id="engineStatus">Loading the configurator…</div>
+          <div class="status error" id="errors" hidden></div>
+          <div class="status warn" id="warnings" hidden></div>
+          <div class="preview" id="preview" role="img" aria-label="Top-down drawing of the cell layout"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Specs</h2>
+          <dl class="specs">
+            <div class="spec"><dt>Nominal voltage</dt><dd id="vNom"></dd></div>
+            <div class="spec"><dt>Full charge</dt><dd id="vMax"></dd></div>
+            <div class="spec"><dt>Capacity</dt><dd id="cap"></dd></div>
+            <div class="spec"><dt>Energy</dt><dd id="energy"></dd></div>
+            <div class="spec"><dt>Max continuous</dt><dd id="amps"></dd></div>
+            <div class="spec"><dt>Cell count</dt><dd id="count"></dd></div>
+            <div class="spec"><dt>Cell weight</dt><dd id="weight"></dd></div>
+            <div class="spec wide"><dt>Enclosure (length × height × width)</dt><dd id="size"></dd></div>
+          </dl>
+          <p class="note">Electrical figures are typical cell datasheet values (placeholder cell data). They don't include the BMS, nickel strip, enclosure or wiring.</p>
+        </div>
+
+        <div class="panel">
+          <h2>Enclosure parts</h2>
+          <div class="parts" id="parts"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Bill of materials</h2>
+          <div class="bom-wrap"><table class="bom" id="bom"></table></div>
+          <p class="note" id="bomNote"></p>
+        </div>
+
+        <div class="panel">
+          <h2>Build files</h2>
+          <ul class="downloads">
+            <li><span>Build package (zip)<small>DXFs for SendCutSend, BOM, the configuration, and a Fusion 360 script for this pack</small></span><button class="btn primary" id="download" disabled>Download</button></li>
+          </ul>
+          <button class="btn primary" disabled>Send to SendCutSend</button>
+          <p class="note" id="dlNote">Sending straight to SendCutSend is coming later; for now upload the DXFs from the zip.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">&copy; <span id="yr">2026</span> FryePower. All rights reserved.</div>
+</footer>
+
+<script src="engine.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const el = { cell: $("cell"), series: $("series"), parallel: $("parallel"), pitch: $("pitch"), base: $("baseplate"), front: $("front"), rear: $("rear") };
+let cells = {}, seq = 0, timer = null;
+
+const fmt = (n, d = 1) => Number(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+const unit = (v, u) => `${v} <small>${u}</small>`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function choices() {
+  return {
+    cell: el.cell.value, series: +el.series.value, parallel: +el.parallel.value,
+    pitch: +el.pitch.value, base_plate: el.base.checked,
+    base_front_mm: +el.front.value, base_rear_mm: +el.rear.value,
+  };
+}
+
+function syncBase() {
+  const on = el.base.checked;
+  el.front.disabled = el.rear.disabled = !on;
+  $("basePair").classList.toggle("off", !on);
+  $("baseHint").textContent = on
+    ? "The pack's side-plate hooks latch into a base plate that bolts to the frame. Set how far it reaches past the pack."
+    : "No base plate: the side plates have no hooks, so the pack needs its own way to mount.";
+}
+
+function drawPack(s, p, pitch, dia) {
+  // Series groups run left to right, parallel cells stack top to bottom, at the holder pitch.
+  const pad = 24, w = s * pitch, h = p * pitch;
+  const vbW = w + pad * 2, vbH = h + pad * 2 + 14;
+  let out = `<svg viewBox="0 0 ${vbW} ${vbH}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`;
+  for (let i = 0; i < s; i++) {
+    const x = pad + i * pitch;
+    out += `<rect class="group" x="${x + 0.5}" y="${pad + 0.5}" width="${pitch - 1}" height="${h - 1}" rx="${pitch / 2}"/>`;
+    for (let j = 0; j < p; j++)
+      out += `<circle class="cell" cx="${x + pitch / 2}" cy="${pad + j * pitch + pitch / 2}" r="${dia / 2 - 0.75}"/>`;
+  }
+  out += `<text class="lbl" x="${pad}" y="${vbH - 8}">${Math.round(w)} × ${Math.round(h)} mm cell block</text></svg>`;
+  return out;
+}
+
+function showList(box, title, items) {
+  box.hidden = !items.length;
+  box.innerHTML = items.length ? `<b>${title}</b><ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>` : "";
+}
+
+function render(r) {
+  const c = choices();
+  $("packTitle").textContent = `Pack layout: ${r.name}`;
+  showList($("errors"), "This pack can't be built yet:", r.errors);
+  showList($("warnings"), "Manufacturing notes:", r.warnings);
+  $("preview").innerHTML = drawPack(c.series, c.parallel, c.pitch, cells[c.cell].diameter_mm);
+
+  const s = r.specs;
+  $("vNom").innerHTML = unit(fmt(s.nominal_v), "V");
+  $("vMax").innerHTML = unit(fmt(s.max_v), "V");
+  $("cap").innerHTML = unit(fmt(s.capacity_ah), "Ah");
+  $("energy").innerHTML = unit(fmt(s.energy_wh, 0), "Wh");
+  $("amps").innerHTML = unit(fmt(s.max_continuous_a, 0), "A");
+  $("count").innerHTML = unit(s.cells, "cells");
+  $("weight").innerHTML = unit(fmt(s.cell_weight_kg, 2), "kg");
+  $("size").innerHTML = r.ok ? unit(r.dims.pack_mm.map(v => Math.round(v)).join(" × "), "mm") : "–";
+
+  // One scale for every drawing (relative to the widest part), so sizes compare honestly
+  const maxW = r.ok ? Math.max(...r.parts.map(p => p.size_mm[0])) : 1;
+  $("parts").innerHTML = r.ok ? r.parts.map(p => `
+    <div class="part-card"><div style="width:${(p.size_mm[0] / maxW * 100).toFixed(1)}%">${p.svg}</div>
+      <div><h3>${esc(p.part_number)} · ${esc(p.description)}</h3>
+      <p>${esc(p.material)} ${p.thickness_mm} mm · qty ${p.quantity}<br>${p.size_mm[0]} × ${p.size_mm[1]} mm<br>
+      ${p.process === "laser" ? "Laser cut" : "CNC routed"}</p></div>
+    </div>`).join("") : `<p class="hint">Parts appear once the pack can be built.</p>`;
+
+  if (r.ok) {
+    const money = v => v == null ? "–" : "$" + fmt(v, 2);
+    $("bom").innerHTML = `<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Cost</th><th>Supplier</th></tr></thead><tbody>` +
+      r.bom.lines.map(l => `<tr><td>${esc(l.item)}<small>${esc(l.description)}</small></td>
+        <td class="num">${fmt(l.quantity, Number.isInteger(l.quantity) ? 0 : 2)} ${esc(l.unit)}</td>
+        <td class="num">${money(l.cost)}</td><td>${esc([l.supplier, l.part_number].filter(Boolean).join(" "))}</td></tr>`).join("") + `</tbody>`;
+    $("bomNote").textContent = `Priced total ${money(r.bom.priced_total)}. ${r.bom.unpriced.length} of ${r.bom.lines.length} lines have no price yet.`;
+  } else {
+    $("bom").innerHTML = "";
+    $("bomNote").textContent = "";
+  }
+  $("download").disabled = !r.ok;
+}
+
+function refresh() {
+  const c = choices(), mine = ++seq;
+  $("seriesOut").textContent = `${c.series}S`;
+  $("parallelOut").textContent = `${c.parallel}P`;
+  try {
+    const r = Engine.pack(c);               // runs in the browser (engine.js)
+    if (mine !== seq) return;
+    render(r);
+  } catch (err) {
+    showList($("errors"), "The configurator could not build this pack:", [err.message]);
+    $("download").disabled = true;
+  }
+}
+
+function scheduleRefresh() { clearTimeout(timer); timer = setTimeout(refresh, 120); }
+
+async function download() {
+  const btn = $("download");
+  btn.disabled = true; btn.textContent = "Building…";
+  try {
+    await new Promise(r => setTimeout(r, 30));    // let "Building…" paint before the engine runs
+    const { name, bytes } = Engine.package(choices());
+    const url = URL.createObjectURL(new Blob([bytes], { type: "application/zip" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    $("dlNote").textContent = `Downloaded ${name}.`;
+  } catch (err) {
+    $("dlNote").textContent = "Download failed: " + err.message;
+  } finally {
+    btn.textContent = "Download"; btn.disabled = false;
+  }
+}
+
+async function init() {
+  $("yr").textContent = new Date().getFullYear();
+  const status = msg => {
+    $("engineStatus").hidden = !msg;
+    $("engineStatus").textContent = msg;
+  };
+  try {
+    await Engine.start(status);
+    const o = Engine.options();
+    for (const c of o.cells) { cells[c.key] = c; el.cell.add(new Option(c.name, c.key)); }
+    for (const p of o.pitches) el.pitch.add(new Option(`${p} mm`, p));
+    [el.series.min, el.series.max] = o.limits.series;
+    [el.parallel.min, el.parallel.max] = o.limits.parallel;
+    const d = o.defaults;
+    el.cell.value = d.cell; el.series.value = d.series; el.parallel.value = d.parallel;
+    el.pitch.value = d.pitch; el.front.value = d.base_front_mm; el.rear.value = d.base_rear_mm;
+    el.base.checked = d.base_plate; syncBase();
+  } catch (err) {
+    status("");
+    showList($("errors"), "The configurator engine did not load:",
+             [err.message + ". Check your connection and reload the page."]);
+    return;
+  }
+  Object.values(el).forEach(e => e.addEventListener("input", scheduleRefresh));
+  el.base.addEventListener("change", syncBase);
+  $("download").addEventListener("click", download);
+  refresh();
+}
+init();
+</script>
+</body>
+</html>

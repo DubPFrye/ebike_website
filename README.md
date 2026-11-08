@@ -1,26 +1,51 @@
-# ebike_website
+# FryePower.com
 
-Landing page for an e-bike parts company, served from a small Python server on the LAN.
+The FryePower website, published with GitHub Pages at https://fryepower.com.
 
-"Voltline" is a placeholder brand name. Search and replace it in `index.html` once there's a real name, and put real contact details in the Contact section.
+All static files: `index.html` is the landing page, and `configurator/` is the battery configurator,
+built from the separate `ebike-battery-configurator` project. The configurator runs entirely in the
+visitor's browser (Pyodide), so no server is needed.
 
-## Run
+## Run locally
 
-Needs Python 3.8+ and nothing else.
+Needs Python 3.8+.
 
 ```
-python server.py
+python server.py --host 127.0.0.1 --port 8020
 ```
 
-Open the printed LAN address (`http://<LAN-IP>:8000`) from another device on your network. Options: `--port 8080`, `--host 127.0.0.1` (this machine only).
+Then open http://localhost:8020 (landing page) and http://localhost:8020/configurator/.
+The server sends `Cache-Control: no-cache`, so a browser refresh picks up edits. Without
+`--host`, it also serves on your LAN (useful for checking the site on a phone).
 
-On Windows, the first run may show a firewall prompt; allow it on **Private** networks. If other devices can't connect, check that inbound TCP 8000 is allowed.
+To pull in the latest configurator after changing it in the other project:
+
+```
+python sync_configurator.py
+```
+
+This runs `../ebike-battery-configurator/web/build_static.py` with that project's venv and writes
+`configurator/` here.
+
+## Publishing
+
+- Push to `main` and GitHub Pages serves the repo root. `CNAME` holds the custom domain;
+  `.nojekyll` makes Pages serve the files as they are.
+- The configurator repo's `publish-configurator.yml` workflow rebuilds `configurator/` and pushes
+  it here on every push to its `main` (it needs the `WEBSITE_REPO` variable and the `WEBSITE_TOKEN`
+  secret set in that repo). You can also run `sync_configurator.py` and commit the result by hand.
+- Don't edit files in `configurator/` here, because the next publish overwrites them. Change them
+  in the configurator project instead.
 
 ## Files
 
-- `index.html` — single self-contained page (no external fonts, scripts or images), so it works without internet.
-- `server.py` — standard-library static file server.
+- `index.html`, `styles.css`: the landing page. It keeps the `#parts`, `#about` and `#contact`
+  sections, because the configurator's header links to them (`../#parts`, ...).
+- `configurator/`: the built configurator (generated).
+- `server.py`: local static server (standard library only).
+- `sync_configurator.py`: rebuilds `configurator/` from the configurator project.
+- `CNAME`, `.nojekyll`: GitHub Pages settings.
 
-## Later
+## To do
 
-The "Battery configurator" section is a placeholder for the configurator app in `../ebike-battery-configurator`. It can link to that app once it has a web front end, or `server.py` can proxy to it.
+- Real contact details in the Contact section (currently placeholders).

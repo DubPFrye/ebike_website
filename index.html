@@ -3,98 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Voltline | E-bike Parts</title>
-<meta name="description" content="Voltline: batteries, motors, controllers and hardware for e-bike builders.">
+<title>FryePower | E-bike Parts</title>
+<meta name="description" content="FryePower: batteries, motors, controllers and hardware for e-bike builders.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&display=swap">
+<link rel="stylesheet" href="styles.css">
 <style>
-  :root {
-    --bg: #f7f7f5;
-    --surface: #ffffff;
-    --text: #1b1d1f;
-    --muted: #5d636a;
-    --line: #e2e3e0;
-    --accent: #1f9d55;
-    --accent-ink: #ffffff;
-    --hero-bg: #12161a;
-    --hero-text: #f2f4f5;
-    --radius: 14px;
-    --max: 1100px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #101316;
-      --surface: #171b1f;
-      --text: #e8eaec;
-      --muted: #9aa1a8;
-      --line: #262c32;
-      --accent: #34c472;
-      --accent-ink: #0b1a11;
-      --hero-bg: #0a0d10;
-    }
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.55;
-  }
-  a { color: inherit; }
-  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px; }
-
-  header.nav {
-    position: sticky; top: 0; z-index: 10;
-    background: color-mix(in srgb, var(--hero-bg) 92%, transparent);
-    backdrop-filter: blur(6px);
-    color: var(--hero-text);
-  }
-  header.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; text-decoration: none; }
-  .brand svg { width: 26px; height: 26px; }
-  nav ul { list-style: none; display: flex; gap: 22px; margin: 0; padding: 0; }
-  nav a { text-decoration: none; opacity: .85; font-size: .95rem; }
-  nav a:hover { opacity: 1; }
-  @media (max-width: 640px) { nav ul { gap: 14px; } nav li.hide-sm { display: none; } }
-
-  .hero { background: var(--hero-bg); color: var(--hero-text); padding: 96px 0 88px; position: relative; overflow: hidden; }
-  .hero::after {
-    content: ""; position: absolute; inset: auto -10% -60% -10%; height: 120%;
-    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 28%, transparent), transparent 60%);
-    pointer-events: none;
-  }
-  .hero .wrap { position: relative; z-index: 1; }
-  .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .78rem; color: var(--accent); font-weight: 600; }
-  .hero h1 { font-size: clamp(2.1rem, 5vw, 3.6rem); line-height: 1.08; margin: 12px 0 18px; max-width: 16ch; }
-  .hero p { font-size: 1.15rem; max-width: 52ch; opacity: .85; margin: 0 0 30px; }
-  .btns { display: flex; flex-wrap: wrap; gap: 12px; }
-  .btn { display: inline-block; padding: 12px 20px; border-radius: 999px; font-weight: 600; text-decoration: none; border: 1px solid transparent; }
-  .btn.primary { background: var(--accent); color: var(--accent-ink); }
-  .btn.ghost { border-color: color-mix(in srgb, var(--hero-text) 35%, transparent); }
-  .btn:hover { filter: brightness(1.08); }
-
-  section { padding: 80px 0; }
-  section h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 10px; }
-  .lead { color: var(--muted); max-width: 60ch; margin: 0 0 36px; }
-
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
-  .card svg { width: 34px; height: 34px; color: var(--accent); }
-  .card h3 { margin: 14px 0 6px; font-size: 1.12rem; }
-  .card p { margin: 0; color: var(--muted); font-size: .96rem; }
-
-  .configurator { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .configurator .wrap { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center; }
-  @media (max-width: 800px) { .configurator .wrap { grid-template-columns: 1fr; } }
-  .badge { display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
-  .steps { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 10px; }
-  .steps li { display: flex; gap: 12px; align-items: baseline; }
-  .steps b { color: var(--accent); min-width: 1.4em; }
-  .pack {
-    aspect-ratio: 4 / 3; border-radius: var(--radius); border: 1px dashed var(--line);
-    display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 22px; background: var(--bg);
-  }
-  .pack span { border-radius: 50%; background: color-mix(in srgb, var(--accent) 22%, var(--surface)); border: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); }
+  .teaser { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .teaser .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; }
+  .teaser h2 { margin-top: 12px; }
+  .teaser .lead { margin-bottom: 0; }
 
   .about .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
   @media (max-width: 800px) { .about .wrap { grid-template-columns: 1fr; } }
@@ -104,24 +23,22 @@
   .contact-box dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0; }
   .contact-box dt { font-weight: 600; }
   .contact-box dd { margin: 0; color: var(--muted); }
-
-  footer { padding: 30px 0 40px; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); }
 </style>
 </head>
 <body>
 
 <header class="nav">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="Voltline home">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" fill="#34c472"/></svg>
-      Voltline
+    <a class="brand" href="#top" aria-label="FryePower home">
+      <svg viewBox="49 48 1065 355" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M86,340 L151,340 L208,241 L304,241 L334,187 L236,187 L285,103 L584,103 L597,136 L567,187 L473,187 L506,125 L443,125 L320,340 L383,340 L440,241 L491,241 L532,340 L598,340 L558,241 L600,241 L659,140 L623,49 L253,49 Z M874,49 L810,49 L749,155 L705,49 L645,49 L714,217 L631,360 L73,360 L50,402 L672,402 Z M1113,49 L898,49 L706,381 L696,402 L911,402 L942,346 L793,346 L820,295 L852,241 L955,241 L986,187 L883,187 L932,103 L1083,103 Z"/></svg>
+      <span class="power" aria-hidden="true">POWER</span>
     </a>
     <nav aria-label="Main">
       <ul>
         <li><a href="#parts">Parts</a></li>
-        <li><a href="#configurator">Configurator</a></li>
         <li class="hide-sm"><a href="#about">About</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li class="hide-sm"><a href="#contact">Contact</a></li>
+        <li><a class="nav-cta" href="configurator/">Configure<span class="hide-sm"> a pack</span></a></li>
       </ul>
     </nav>
   </div>
@@ -135,7 +52,7 @@
       <p>Batteries, motors, controllers and the hardware that ties them together, chosen for riders who build and repair their own e-bikes.</p>
       <div class="btns">
         <a class="btn primary" href="#parts">Browse parts</a>
-        <a class="btn ghost" href="#configurator">Battery configurator</a>
+        <a class="btn ghost" href="configurator/">Battery configurator</a>
       </div>
     </div>
   </section>
@@ -169,34 +86,24 @@
     </div>
   </section>
 
-  <section id="configurator" class="configurator">
+  <section id="configurator" class="teaser">
     <div class="wrap">
       <div>
-        <span class="badge">Coming soon</span>
-        <h2 style="margin-top:12px">Battery configurator</h2>
-        <p class="lead" style="margin-bottom:0">Tell us your voltage, range and space, and we'll lay out a pack that fits your frame.</p>
-        <ul class="steps">
-          <li><b>1</b><span>Pick a voltage and capacity target.</span></li>
-          <li><b>2</b><span>Choose a cell and series/parallel layout.</span></li>
-          <li><b>3</b><span>Get a parts list and build files.</span></li>
-        </ul>
+        <span class="badge">Preview</span>
+        <h2>Battery configurator</h2>
+        <p class="lead">Lay out a pack for your frame and see voltage, capacity and size update as you go.</p>
       </div>
-      <div class="pack" aria-hidden="true">
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-      </div>
+      <a class="btn primary" href="configurator/">Open the configurator</a>
     </div>
   </section>
 
   <section id="about" class="about">
     <div class="wrap">
       <div>
-        <h2>About Voltline</h2>
+        <h2>About FryePower</h2>
       </div>
       <div>
-        <p>We're riders and builders who got tired of guessing whether a part would actually work. Voltline stocks components we'd put on our own bikes, with clear specs and straight answers.</p>
+        <p>We're riders and builders who got tired of guessing whether a part would actually work. FryePower stocks components we'd put on our own bikes, with clear specs and straight answers.</p>
         <p>Whether you're converting a commuter or building a custom pack, we're here to help you get it right the first time.</p>
       </div>
     </div>
@@ -218,7 +125,7 @@
 </main>
 
 <footer>
-  <div class="wrap">&copy; <span id="yr">2026</span> Voltline. All rights reserved.</div>
+  <div class="wrap">&copy; <span id="yr">2026</span> FryePower. All rights reserved.</div>
 </footer>
 <script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
 </body>
