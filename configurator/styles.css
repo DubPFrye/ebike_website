@@ -68,29 +68,20 @@ nav a.nav-cta[aria-current="page"] { color: var(--brand-ink); }
   pointer-events: none;
 }
 .hero .wrap { position: relative; z-index: 1; }
-.eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .78rem; color: var(--brand); font-weight: 600; }
 .hero h1 { font-size: clamp(2.1rem, 5vw, 3.6rem); line-height: 1.08; margin: 12px 0 18px; max-width: 16ch; }
 .hero.compact h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); max-width: none; }
 .hero p { font-size: 1.15rem; max-width: 52ch; opacity: .85; margin: 0 0 30px; }
 .hero.compact p { margin-bottom: 0; }
 
 /* Buttons */
-.btns { display: flex; flex-wrap: wrap; gap: 12px; }
 .btn { display: inline-block; padding: 12px 20px; border-radius: 999px; font-weight: 600; text-decoration: none; border: 1px solid transparent; font: inherit; font-weight: 600; cursor: pointer; }
 .btn.primary { background: var(--brand); color: var(--brand-ink); border-color: color-mix(in srgb, var(--brand-ink) 18%, var(--brand)); }
-.btn.ghost { border-color: color-mix(in srgb, currentColor 35%, transparent); background: transparent; color: inherit; }
 .btn:hover { filter: brightness(1.08); }
 .btn[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
 
 /* Sections and cards */
 section { padding: 80px 0; }
 section h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 10px; }
-.lead { color: var(--muted); max-width: 60ch; margin: 0 0 36px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
-.card svg { width: 34px; height: 34px; color: var(--accent); }
-.card h3 { margin: 14px 0 6px; font-size: 1.12rem; }
-.card p { margin: 0; color: var(--muted); font-size: .96rem; }
 .badge { display: inline-block; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
 
 .hero .badge { background: color-mix(in srgb, var(--brand) 16%, transparent); color: var(--brand); }

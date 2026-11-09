@@ -71,6 +71,26 @@
   .downloads span small { display: block; color: var(--muted); font-size: .82rem; }
   .downloads .btn { padding: 8px 14px; font-size: .9rem; }
   .note { font-size: .85rem; color: var(--muted); margin: 14px 0 0; }
+
+  .alpha { margin-top: 20px; max-width: 760px; border-radius: 10px; padding: 14px 16px; font-size: .95rem;
+           background: color-mix(in srgb, #d64545 16%, transparent); border: 1px solid color-mix(in srgb, #d64545 60%, transparent); }
+  .alpha strong { display: block; font-size: 1.02rem; margin-bottom: 4px; }
+  .alpha p { margin: 0; }
+  .badge.alpha-badge { background: #d64545; color: #fff; }
+
+  dialog.terms { max-width: 640px; width: calc(100% - 32px); max-height: calc(100vh - 32px); padding: 0; border: 1px solid var(--line);
+                 border-radius: var(--radius); background: var(--surface); color: var(--text); }
+  dialog.terms::backdrop { background: rgb(0 0 0 / .6); }
+  .terms form { padding: 24px; }
+  .terms h2 { margin: 0 0 12px; font-size: 1.25rem; }
+  .terms .terms-body { max-height: 50vh; overflow-y: auto; font-size: .92rem; padding-right: 6px; }
+  .terms .terms-body p { margin: 0 0 10px; }
+  .terms .terms-body ul { margin: 0 0 10px; padding-left: 1.2em; }
+  .terms .terms-body li { margin-bottom: 6px; }
+  .terms .check { margin: 16px 0; align-items: flex-start; }
+  .terms .check input { flex: none; margin-top: 3px; }
+  .terms .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+  .terms .btn[disabled] { opacity: .5; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -95,9 +115,13 @@
 <main>
   <section class="hero compact">
     <div class="wrap">
-      <span class="badge">Preview</span>
+      <span class="badge alpha-badge">Alpha</span>
       <h1>Battery configurator</h1>
       <p>Pick a cell and a series/parallel layout. The enclosure, parts and bill of materials update as you go, and you can download the build files.</p>
+      <div class="alpha" role="note">
+        <strong>⚠ Alpha: untested design. Use at your own risk.</strong>
+        <p>No pack from this configurator has been built or tested yet, and the design has not been checked for safety. Lithium-ion packs can catch fire or explode if they are designed, built or charged wrong. Treat everything here as a starting point for your own engineering, not a proven design.</p>
+      </div>
     </div>
   </section>
 
@@ -183,6 +207,28 @@
     </div>
   </section>
 </main>
+
+<dialog class="terms" id="terms" aria-labelledby="termsTitle">
+  <form method="dialog">
+    <h2 id="termsTitle">Before you download: read and accept</h2>
+    <div class="terms-body">
+      <p><strong>This configurator is alpha software. The designs it produces have not been built, tested or verified by FryePower.</strong></p>
+      <ul>
+        <li>Lithium-ion battery packs store a lot of energy. A mistake in design, parts, assembly, charging or use can cause fire, explosion, toxic smoke, burns, serious injury, death or property damage.</li>
+        <li>The files (DXFs, bill of materials, Fusion 360 script and specs) are provided "as is", without warranty of any kind, including any warranty that they are correct, complete, safe or fit for any purpose. Cell data and electrical figures are placeholders.</li>
+        <li>You are solely responsible for checking every dimension, part, clearance and electrical value; for choosing a suitable BMS, fusing, wiring and charger; for building and testing the pack safely; and for following the laws and standards that apply where you live.</li>
+        <li>Only build a battery pack if you have the knowledge, tools and safe workspace to do it. If you are not sure, don't build it.</li>
+        <li>To the fullest extent the law allows, FryePower and its owners are not liable for any loss, damage or injury arising from use of this configurator or its files.</li>
+      </ul>
+      <p>By downloading, you accept these terms and use the files entirely at your own risk.</p>
+    </div>
+    <label class="check"><input type="checkbox" id="termsAgree"> I have read and understand this, and I accept full responsibility for anything I build from these files.</label>
+    <div class="actions">
+      <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" value="accept" id="termsAccept" disabled>Accept and download</button>
+    </div>
+  </form>
+</dialog>
 
 <footer>
   <div class="wrap">&copy; <span id="yr">2026</span> FryePower. All rights reserved.</div>
@@ -291,7 +337,20 @@ function refresh() {
 
 function scheduleRefresh() { clearTimeout(timer); timer = setTimeout(refresh, 120); }
 
+// Every download first shows the disclaimer; the file is only built after "Accept and download".
+function askTerms() {
+  const dlg = $("terms");
+  $("termsAgree").checked = false;
+  $("termsAccept").disabled = true;
+  return new Promise(resolve => {
+    dlg.addEventListener("close", () => resolve(dlg.returnValue === "accept"), { once: true });
+    dlg.returnValue = "";
+    dlg.showModal();
+  });
+}
+
 async function download() {
+  if (!(await askTerms())) return;
   const btn = $("download");
   btn.disabled = true; btn.textContent = "Building…";
   try {
@@ -334,6 +393,7 @@ async function init() {
   Object.values(el).forEach(e => e.addEventListener("input", scheduleRefresh));
   el.base.addEventListener("change", syncBase);
   $("download").addEventListener("click", download);
+  $("termsAgree").addEventListener("change", e => { $("termsAccept").disabled = !e.target.checked; });
   refresh();
 }
 init();
