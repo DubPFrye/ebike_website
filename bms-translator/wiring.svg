@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">LLT BMS to VESC CAN bridge wiring</title>
+  <desc id="d">Cartoon wiring illustration: VESC CAN connector to SN65HVD230 transceiver and STM32 Blue Pill; LLT BMS UART to Blue Pill PA9/PA10. Licensed CC BY-SA 4.0.</desc>
+  <defs>
+    <filter id="sh" x="-10%" y="-10%" width="130%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".25"/></filter>
+    <g id="pin"><rect x="-6" y="-6" width="12" height="12" rx="2" fill="#d9b44a" stroke="#8a6d1d" stroke-width="1.5"/></g>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="960" height="600" rx="22" fill="#f5f1e8"/>
+  <text x="32" y="44" font-size="22" font-weight="700" fill="#1b1d1f">LLT BMS → VESC CAN bridge: wiring</text>
+  <text x="32" y="68" font-size="13" fill="#5d636a">Bus terminated at the VESCs only. Bridge node is unterminated.</text>
+
+  <!-- ============ WIRES (drawn first, under boards) ============ -->
+  <g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <!-- VESC 5V -> Blue Pill 5V (top route) -->
+    <path d="M250 190 H290 V105 H690 V160" stroke="#d63a2f"/>
+    <!-- VESC GND -> Blue Pill G (bottom route) -->
+    <path d="M250 280 H290 V430 H690 V340" stroke="#26282b"/>
+    <!-- CANH / CANL -->
+    <path d="M250 220 H380" stroke="#f2c230"/>
+    <path d="M250 250 H380" stroke="#2f9e44"/>
+    <!-- transceiver -> Blue Pill -->
+    <path d="M520 190 H630" stroke="#f08c00"/>
+    <path d="M520 220 H630" stroke="#26282b"/>
+    <path d="M520 250 H630" stroke="#e8590c"/>
+    <path d="M520 280 H630" stroke="#7048e8"/>
+    <!-- BMS UART -->
+    <path d="M730 470 V430" stroke="#26282b"/>
+    <path d="M790 470 V340" stroke="#1c7ed6"/>
+    <path d="M840 470 V340" stroke="#9aa1a8"/>
+  </g>
+  <!-- white wire with grey outline so it reads on the light background -->
+  <path d="M840 470 V340" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M730 430 H690" fill="none" stroke="#26282b" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="690" cy="430" r="7" fill="#26282b"/>
+
+  <!-- ============ VESC ============ -->
+  <g filter="url(#sh)">
+    <rect x="40" y="130" width="210" height="200" rx="16" fill="#2b2f36"/>
+    <rect x="52" y="142" width="186" height="34" rx="8" fill="#3a404a"/>
+    <g fill="#4a515c"><rect x="60" y="300" width="14" height="22" rx="3"/><rect x="82" y="300" width="14" height="22" rx="3"/><rect x="104" y="300" width="14" height="22" rx="3"/></g>
+  </g>
+  <text x="145" y="166" font-size="17" font-weight="800" fill="#b8f03a" text-anchor="middle" letter-spacing="2">VESC</text>
+  <text x="112" y="214" font-size="12" fill="#c9ced4" text-anchor="middle">e.g. Flipsky Mini</text>
+  <text x="112" y="230" font-size="12" fill="#c9ced4" text-anchor="middle">FSESC6.7 PRO</text>
+  <!-- CAN connector -->
+  <rect x="214" y="174" width="30" height="122" rx="5" fill="#f2f2ee" stroke="#c8c6bd"/>
+  <use href="#pin" x="250" y="190"/><use href="#pin" x="250" y="220"/><use href="#pin" x="250" y="250"/><use href="#pin" x="250" y="280"/>
+  <g font-size="12" font-weight="700" fill="#e8eaec" text-anchor="end">
+    <text x="206" y="194">5V</text><text x="206" y="224">CAH</text><text x="206" y="254">CAL</text><text x="206" y="284">−</text>
+  </g>
+  <text x="112" y="262" font-size="11" fill="#9aa1a8" text-anchor="middle">CAN port →</text>
+  <text x="145" y="352" font-size="12" font-weight="600" fill="#5d636a" text-anchor="middle">120 Ω termination ON</text>
+
+  <!-- ============ SN65HVD230 ============ -->
+  <g filter="url(#sh)">
+    <rect x="380" y="160" width="140" height="150" rx="10" fill="#2a5db0"/>
+    <rect x="424" y="208" width="52" height="40" rx="4" fill="#1b1d1f"/>
+  </g>
+  <g fill="#9ab8ea"><circle cx="394" cy="174" r="5"/><circle cx="506" cy="174" r="5"/><circle cx="394" cy="296" r="5"/><circle cx="506" cy="296" r="5"/></g>
+  <text x="450" y="232" font-size="9" fill="#c9ced4" text-anchor="middle">VP230</text>
+  <text x="450" y="330" font-size="13" font-weight="700" fill="#1b1d1f" text-anchor="middle">SN65HVD230</text>
+  <text x="450" y="346" font-size="11" fill="#5d636a" text-anchor="middle">no terminator</text>
+  <use href="#pin" x="380" y="220"/><use href="#pin" x="380" y="250"/>
+  <use href="#pin" x="520" y="190"/><use href="#pin" x="520" y="220"/><use href="#pin" x="520" y="250"/><use href="#pin" x="520" y="280"/>
+  <g font-size="11" font-weight="700" fill="#ffffff">
+    <text x="392" y="224">CANH</text><text x="392" y="254">CANL</text>
+    <text x="508" y="194" text-anchor="end">3V3</text><text x="508" y="224" text-anchor="end">GND</text><text x="508" y="254" text-anchor="end">CTX</text><text x="508" y="284" text-anchor="end">CRX</text>
+  </g>
+
+  <!-- ============ Blue Pill ============ -->
+  <g filter="url(#sh)">
+    <rect x="630" y="160" width="290" height="180" rx="10" fill="#1f4fa8"/>
+    <rect x="752" y="214" width="62" height="62" rx="4" fill="#1b1d1f" transform="rotate(45 783 245)"/>
+    <rect x="870" y="226" width="34" height="38" rx="4" fill="#c9ced4"/>
+    <rect x="660" y="292" width="20" height="14" rx="2" fill="#e6c34a"/>
+  </g>
+  <text x="783" y="249" font-size="10" fill="#c9ced4" text-anchor="middle">STM32</text>
+  <text x="775" y="362" font-size="13" font-weight="700" fill="#1b1d1f" text-anchor="middle">STM32F103 "Blue Pill"</text>
+  <use href="#pin" x="690" y="160"/>
+  <use href="#pin" x="630" y="190"/><use href="#pin" x="630" y="220"/><use href="#pin" x="630" y="250"/><use href="#pin" x="630" y="280"/>
+  <use href="#pin" x="690" y="340"/><use href="#pin" x="790" y="340"/><use href="#pin" x="840" y="340"/>
+  <g font-size="11" font-weight="700" fill="#ffffff">
+    <text x="690" y="182" text-anchor="middle">5V</text>
+    <text x="642" y="194">3.3</text><text x="642" y="224">G</text><text x="642" y="254">PB9</text><text x="642" y="284">PB8</text>
+    <text x="690" y="328" text-anchor="middle">G</text><text x="790" y="328" text-anchor="middle">PA9</text><text x="840" y="328" text-anchor="middle">PA10</text>
+  </g>
+  <text x="900" y="214" font-size="10" fill="#c9ced4" text-anchor="middle">SWD</text>
+
+  <!-- ============ LLT BMS ============ -->
+  <g filter="url(#sh)">
+    <rect x="660" y="470" width="270" height="90" rx="10" fill="#2f7d3a"/>
+    <g fill="#1b1d1f"><rect x="870" y="490" width="40" height="22" rx="3"/><rect x="870" y="520" width="40" height="22" rx="3"/></g>
+  </g>
+  <use href="#pin" x="730" y="470"/><use href="#pin" x="790" y="470"/><use href="#pin" x="840" y="470"/>
+  <g font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">
+    <text x="730" y="494">GND</text><text x="790" y="494">RX</text><text x="840" y="494">TX</text>
+  </g>
+  <text x="765" y="530" font-size="15" font-weight="800" fill="#ffffff" text-anchor="middle">LLT / JBD BMS</text>
+  <text x="765" y="548" font-size="11" fill="#d3f0d6" text-anchor="middle">UART port (check your pin order)</text>
+
+  <!-- ============ Legend ============ -->
+  <g font-size="12" fill="#1b1d1f">
+    <g transform="translate(40 470)">
+      <text x="0" y="0" font-weight="700">Wires</text>
+      <line x1="0" y1="18" x2="26" y2="18" stroke="#d63a2f" stroke-width="6" stroke-linecap="round"/><text x="34" y="22">5V from VESC</text>
+      <line x1="0" y1="38" x2="26" y2="38" stroke="#26282b" stroke-width="6" stroke-linecap="round"/><text x="34" y="42">Ground (common)</text>
+      <line x1="0" y1="58" x2="26" y2="58" stroke="#f08c00" stroke-width="6" stroke-linecap="round"/><text x="34" y="62">3.3V to transceiver</text>
+      <line x1="0" y1="78" x2="26" y2="78" stroke="#f2c230" stroke-width="6" stroke-linecap="round"/><text x="34" y="82">CAN high</text>
+      <line x1="0" y1="98" x2="26" y2="98" stroke="#2f9e44" stroke-width="6" stroke-linecap="round"/><text x="34" y="102">CAN low</text>
+    </g>
+    <g transform="translate(250 470)">
+      <line x1="0" y1="18" x2="26" y2="18" stroke="#e8590c" stroke-width="6" stroke-linecap="round"/><text x="34" y="22">CAN TX: PB9 → CTX</text>
+      <line x1="0" y1="38" x2="26" y2="38" stroke="#7048e8" stroke-width="6" stroke-linecap="round"/><text x="34" y="42">CAN RX: PB8 ← CRX</text>
+      <line x1="0" y1="58" x2="26" y2="58" stroke="#1c7ed6" stroke-width="6" stroke-linecap="round"/><text x="34" y="62">UART: PA9 → BMS RX</text>
+      <line x1="0" y1="78" x2="26" y2="78" stroke="#9aa1a8" stroke-width="7" stroke-linecap="round"/><line x1="0" y1="78" x2="26" y2="78" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/><text x="34" y="82">UART: PA10 ← BMS TX</text>
+    </g>
+  </g>
+  <text x="928" y="588" font-size="10" fill="#9aa1a8" text-anchor="end">FryePower · CC BY-SA 4.0</text>
+</svg>

@@ -14,6 +14,12 @@
   .teaser .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; }
   .teaser h2 { margin-top: 12px; }
   .teaser .lead { margin-bottom: 0; }
+  .teaser .wrap.projects { display: block; }
+  .teaser .projects .lead { margin-bottom: 28px; }
+  .card.project { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg); }
+  .card.project .badge { margin-top: 12px; }
+  .card.project h3 { margin-top: 8px; }
+  .card.project p { flex: 1; margin-bottom: 18px; }
 
   .about .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
   @media (max-width: 800px) { .about .wrap { grid-template-columns: 1fr; } }
@@ -36,6 +42,7 @@
     <nav aria-label="Main">
       <ul>
         <li><a href="#parts">Parts</a></li>
+        <li><a href="#projects">Projects</a></li>
         <li class="hide-sm"><a href="#about">About</a></li>
         <li class="hide-sm"><a href="#contact">Contact</a></li>
         <li><a class="nav-cta" href="configurator/">Configure<span class="hide-sm"> a pack</span></a></li>
@@ -86,14 +93,28 @@
     </div>
   </section>
 
-  <section id="configurator" class="teaser">
-    <div class="wrap">
+  <section id="projects" class="teaser">
+    <div class="wrap projects">
       <div>
-        <span class="badge">Preview</span>
-        <h2>Battery configurator</h2>
-        <p class="lead">Lay out a pack for your frame and see voltage, capacity and size update as you go.</p>
+        <h2>Projects</h2>
+        <p class="lead">Free, open tools and build guides from our own bikes.</p>
       </div>
-      <a class="btn primary" href="configurator/">Open the configurator</a>
+      <div class="grid">
+        <article class="card project" id="configurator">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4"/><path d="M7 10v4M11 10v4M15 10v4"/></svg>
+          <span class="badge">Preview</span>
+          <h3>Battery configurator</h3>
+          <p>Lay out a pack for your frame and see voltage, capacity and size update as you go.</p>
+          <a class="btn primary" href="configurator/">Open the configurator</a>
+        </article>
+        <article class="card project">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="8" width="7" height="8" rx="1.5"/><rect x="15" y="8" width="7" height="8" rx="1.5"/><path d="M9 11h6M9 13h6"/><path d="M5.5 5v3M18.5 5v3"/></svg>
+          <span class="badge">Draft</span>
+          <h3>LLT BMS to VESC CAN bridge</h3>
+          <p>Use a cheap smart BMS for charging and balancing, and let your VESC cut off on the lowest cell.</p>
+          <a class="btn primary" href="bms-translator/">Read the build guide</a>
+        </article>
+      </div>
     </div>
   </section>
 

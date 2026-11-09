@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLT BMS to VESC CAN Bridge | FryePower</title>
+<meta name="description" content="Use a cheap LLT/JBD smart BMS for charging and balancing, and let your VESC see every cell voltage over CAN.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&display=swap">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  .guide { padding: 48px 0 80px; }
+  .guide .wrap { max-width: 860px; }
+  .guide h2 { margin: 48px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .guide h2:first-child { margin-top: 0; border-top: 0; }
+  .guide h3 { margin: 28px 0 8px; }
+  .guide p, .guide li { max-width: 72ch; }
+  .guide img { display: block; max-width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--line); margin: 18px 0 8px; }
+  .guide p > em:only-child { color: var(--muted); font-size: .92rem; }
+  .guide code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .9em; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+  .guide pre { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; }
+  .guide pre code { border: 0; padding: 0; }
+  .guide table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: .95rem; }
+  .guide th, .guide td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .guide th { background: var(--surface); }
+  .guide blockquote { margin: 20px 0; padding: 14px 18px; border-radius: 10px; background: color-mix(in srgb, #d99a1e 14%, var(--surface)); border: 1px solid color-mix(in srgb, #d99a1e 45%, transparent); }
+  .guide blockquote p { margin: 0; }
+  .guide a { color: var(--accent); }
+  .toc { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 22px; margin: 0 0 40px; }
+  .toc strong { display: block; margin-bottom: 6px; }
+  .toc ol { margin: 0; padding-left: 1.3em; columns: 2; column-gap: 32px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+  .meta { color: var(--muted); font-size: .88rem; margin-top: 48px; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../" aria-label="FryePower home">
+      <svg viewBox="49 48 1065 355" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M86,340 L151,340 L208,241 L304,241 L334,187 L236,187 L285,103 L584,103 L597,136 L567,187 L473,187 L506,125 L443,125 L320,340 L383,340 L440,241 L491,241 L532,340 L598,340 L558,241 L600,241 L659,140 L623,49 L253,49 Z M874,49 L810,49 L749,155 L705,49 L645,49 L714,217 L631,360 L73,360 L50,402 L672,402 Z M1113,49 L898,49 L706,381 L696,402 L911,402 L942,346 L793,346 L820,295 L852,241 L955,241 L986,187 L883,187 L932,103 L1083,103 Z"/></svg>
+      <span class="power" aria-hidden="true">POWER</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="../#projects">Projects</a></li>
+        <li class="hide-sm"><a href="../#parts">Parts</a></li>
+        <li><a class="nav-cta" href="../configurator/">Configure<span class="hide-sm"> a pack</span></a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero compact">
+    <div class="wrap">
+      <div class="eyebrow">Project guide</div>
+      <h1>LLT BMS to VESC CAN Bridge</h1>
+      <p>Use a cheap LLT/JBD smart BMS for charging and balancing, and let your VESC see every cell voltage over CAN.</p>
+      <div style="margin-top:18px"><span class="badge">Draft</span></div>
+    </div>
+  </section>
+
+  <section class="guide">
+    <div class="wrap">
+      <nav class="toc" aria-label="Contents"><strong>Contents</strong><ol><li><a href="#what-this-is">What this is</a></li><li><a href="#safety-warning">Safety warning</a></li><li><a href="#parts">Parts</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#notes-and-limitations">Notes and limitations</a></li><li><a href="#step-1-wire-it-up">Step 1: Wire it up</a></li><li><a href="#step-2-flash-the-blue-pill">Step 2: Flash the Blue Pill</a></li><li><a href="#step-3-set-up-the-vesc">Step 3: Set up the VESC</a></li><li><a href="#step-4-bench-test">Step 4: Bench test</a></li><li><a href="#troubleshooting">Troubleshooting</a></li><li><a href="#downloads">Downloads</a></li><li><a href="#license">License</a></li></ol></nav>
+      <h2 id="what-this-is">What this is</h2>
+<p>A small adapter that reads data from an inexpensive <strong>LLT / JBD smart BMS</strong> over its UART port and re-sends it on the <strong>CAN bus</strong> in the same format a VESC expects from a VESC-compatible BMS.</p>
+<p>Once the VESC can see every cell voltage, it can limit or cut motor current based on the <strong>lowest cell</strong>, not just the total pack voltage. That means a budget 20A BMS can do what it's good at, charging and balancing, while the VESC handles discharge protection. The BMS's FET output switch doesn't need to carry motor current at all.</p>
+<p>The bridge is an STM32F103 "Blue Pill" board plus an SN65HVD230 CAN transceiver: a few dollars of parts.</p>
+<blockquote>
+<p><strong>Draft / work in progress.</strong> This page is published while the project is still being built. The firmware is not yet confirmed working on a VESC. Don't rely on it for protection on a bike you ride until this warning is gone.</p>
+</blockquote>
+<h2 id="safety-warning">Safety warning</h2>
+<p>If you skip the BMS's discharge FET, <strong>this bridge and the VESC are your only over-discharge protection</strong>. If the STM32 crashes, a wire comes loose, or the BMS stops answering, nothing else will stop the pack from being run flat.</p>
+<ul>
+<li>Bench-test every failure case (unplug the UART, unplug CAN, power-cycle the BMS) before riding.</li>
+<li>Keep a fuse and a physical disconnect on the pack.</li>
+<li>Lithium packs store a lot of energy. If you're not comfortable working with them, stop here.</li>
+</ul>
+<p>This design is shared as-is, with no warranty. You build and use it at your own risk.</p>
+<h2 id="parts">Parts</h2>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>STM32F103C8 "Blue Pill"</td>
+<td>Any genuine or clone F103C8 board</td>
+</tr>
+<tr>
+<td>SN65HVD230 CAN transceiver board</td>
+<td>3.3V transceiver; remove its 120 Ω terminator if it has one</td>
+</tr>
+<tr>
+<td>LLT / JBD smart BMS with UART port</td>
+<td>Tested target: LLT 20A, 10S–13S</td>
+</tr>
+<tr>
+<td>VESC-based controller with CAN</td>
+<td>Prototype uses a Flipsky Mini FSESC6.7 PRO</td>
+</tr>
+<tr>
+<td>ST-Link V2 programmer</td>
+<td>For flashing the Blue Pill</td>
+</tr>
+<tr>
+<td>Jumper wires / JST-PH connectors</td>
+<td>Breadboard for testing, soldered for the bike</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tools:</strong> soldering iron, multimeter, a PC with STM32CubeIDE (free) or STM32CubeProgrammer, and VESC Tool.</p>
+<h2 id="how-it-works">How it works</h2>
+<ol>
+<li>Every 500 ms the Blue Pill asks the BMS for its <strong>basic info</strong> (pack voltage, current, capacity, temperatures, protection flags) and its <strong>cell voltages</strong>, using the LLT UART protocol at 9600 baud.</li>
+<li>It converts the numbers into the VESC BMS CAN message format: pack voltage and current, state of charge, min/max cell voltage, every cell voltage, temperatures and Ah/Wh.</li>
+<li>It sends those frames on the CAN bus at 500 kbps. Every VESC on the bus can read them.</li>
+<li>In VESC Tool you tell the VESC to use the CAN BMS and set the cell-voltage limits.</li>
+</ol>
+<h2 id="notes-and-limitations">Notes and limitations</h2>
+<ul>
+<li><strong>Termination:</strong> a CAN bus needs exactly two 120 Ω terminators, one at each physical end. On a two-motor bike, terminate the two VESCs and leave the bridge <strong>unterminated</strong>. Many SN65HVD230 boards ship with a 120 Ω resistor fitted; check and remove it.</li>
+<li><strong>Pins:</strong> the Blue Pill's CAN uses the remapped pins <strong>PB8 (RX) / PB9 (TX)</strong>, because the default pins clash with USB.</li>
+<li><strong>Power:</strong> the bridge runs from the VESC's 5V on its CAN connector. The Blue Pill's 3.3V regulator feeds the transceiver.</li>
+<li><strong>Not reported by LLT:</strong> state of health and per-cell balancing status. The bridge sends SoH as 100% and balancing as off.</li>
+<li><strong>Test mode:</strong> the firmware has a <code>CAN_TEST_MODE</code> switch that sends made-up, slowly changing BMS data, so you can check the CAN side without a BMS connected.</li>
+</ul>
+<h2 id="step-1-wire-it-up">Step 1: Wire it up</h2>
+<p><img alt="Wiring illustration" src="wiring.svg" /></p>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VESC CAN <strong>5V</strong></td>
+<td>Blue Pill <strong>5V</strong></td>
+</tr>
+<tr>
+<td>VESC CAN <strong>−</strong> (GND)</td>
+<td>Blue Pill <strong>G</strong>, transceiver <strong>GND</strong></td>
+</tr>
+<tr>
+<td>Blue Pill <strong>3.3</strong></td>
+<td>Transceiver <strong>3V3</strong></td>
+</tr>
+<tr>
+<td>Blue Pill <strong>PB9</strong></td>
+<td>Transceiver <strong>CTX</strong></td>
+</tr>
+<tr>
+<td>Blue Pill <strong>PB8</strong></td>
+<td>Transceiver <strong>CRX</strong></td>
+</tr>
+<tr>
+<td>Transceiver <strong>CANH</strong></td>
+<td>VESC CAN <strong>CAH</strong></td>
+</tr>
+<tr>
+<td>Transceiver <strong>CANL</strong></td>
+<td>VESC CAN <strong>CAL</strong></td>
+</tr>
+<tr>
+<td>BMS UART <strong>TX</strong></td>
+<td>Blue Pill <strong>PA10</strong> (RX)</td>
+</tr>
+<tr>
+<td>BMS UART <strong>RX</strong></td>
+<td>Blue Pill <strong>PA9</strong> (TX)</td>
+</tr>
+<tr>
+<td>BMS UART <strong>GND</strong></td>
+<td>Blue Pill <strong>G</strong></td>
+</tr>
+</tbody>
+</table>
+<p>On the Flipsky Mini FSESC6.7 PRO, the 4-pin CAN connector reads <strong>−, CAL, CAH, 5V</strong>. Check your own VESC's documentation; other boards differ.</p>
+<blockquote>
+<p><strong>BMS connector:</strong> the LLT UART connector's pin order still needs confirming for this guide. Some LLT/JBD boards have a fourth pin that carries a voltage. Measure it before connecting anything to the Blue Pill.</p>
+</blockquote>
+<p><img alt="Breadboard prototype" src="images/breadboard-prototype.jpg" /></p>
+<p><em>The breadboard prototype: Flipsky Mini FSESC6.7 PRO (top), SN65HVD230 and Blue Pill (breadboard), ST-Link (right). The BMS isn't connected in this photo.</em></p>
+<h2 id="step-2-flash-the-blue-pill">Step 2: Flash the Blue Pill</h2>
+<p><strong>Option A, prebuilt firmware:</strong> download the firmware below and flash it with STM32CubeProgrammer through the ST-Link (SWD). <em>(A prebuilt file will be added once the firmware is confirmed working.)</em></p>
+<p><strong>Option B, build it yourself:</strong></p>
+<ol>
+<li>Download the source zip below, or clone the GitHub repo.</li>
+<li>In STM32CubeIDE: <strong>File → Import → Existing Projects into Workspace</strong>, and choose <code>firmware/VESC2LLT</code>.</li>
+<li>In <code>Core/Src/main.c</code>, comment out <code>#define CAN_TEST_MODE</code> to use the real BMS. Leave it in for a first CAN-only test.</li>
+<li>Build and run with the ST-Link connected (SWDIO, SWCLK, GND). Leave the ST-Link's 3.3V wire disconnected when the VESC is powering the board.</li>
+</ol>
+<h2 id="step-3-set-up-the-vesc">Step 3: Set up the VESC</h2>
+<p><em>To be written: VESC Tool BMS settings (CAN BMS type, cell voltage limits, what happens when BMS messages stop arriving).</em></p>
+<h2 id="step-4-bench-test">Step 4: Bench test</h2>
+<ol>
+<li>Start in <code>CAN_TEST_MODE</code> with only the VESC connected. Open VESC Tool's <strong>BMS</strong> page; you should see the made-up values slowly sweeping.</li>
+<li>Switch to real BMS mode and connect the BMS. Check that the cell voltages in VESC Tool match the BMS's own app.</li>
+<li>Unplug the UART, then the CAN wires, and confirm the VESC reacts the way you expect before you ride.</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>CANH and CANL both sit at about 2.2–2.5V with almost no difference between them:</strong> the bus is idle and nothing is transmitting. Check the PB8/PB9 wiring to CRX/CTX, and that CAN started in firmware.</li>
+<li><strong>Nothing on VESC Tool's BMS page:</strong> check that both ends use 500 kbps, and that CANH and CANL aren't swapped.</li>
+<li><strong>Can't connect the ST-Link:</strong> hold the Blue Pill's reset button while you start the connection.</li>
+</ul>
+<h2 id="downloads">Downloads</h2>
+<ul>
+<li><a href="downloads/LLT-VESC-Bridge-source.zip">Source code (zip)</a>: STM32CubeIDE project, GPL-3.0</li>
+<li><a href="wiring.svg">Wiring illustration (SVG)</a></li>
+<li><a href="https://github.com/DubPFrye/LLT-VESC-Bridge">GitHub repository</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>Firmware: <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a>. This guide, the diagrams and photos: <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</p>
+      <p class="meta">Built 2026-11-08 from <a href="https://github.com/DubPFrye/LLT-VESC-Bridge/commit/b85dad9">b85dad9</a> ·
+        <a href="https://github.com/DubPFrye/LLT-VESC-Bridge">Source on GitHub</a></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">&copy; <span id="yr">2026</span> FryePower. Guide content CC BY-SA 4.0; firmware GPL-3.0.</div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>
