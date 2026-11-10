@@ -3,7 +3,7 @@
 The FryePower website, published with GitHub Pages at https://fryepower.com.
 
 All static files: `index.html` is the landing page, and `configurator/` is the battery configurator,
-built from the separate `ebike-battery-configurator` project. The configurator runs entirely in the
+built from the separate `pev_battery_configurator` repo (local folder `ebike-battery-configurator`). The configurator runs entirely in the
 visitor's browser (Pyodide), so no server is needed.
 
 ## Run locally
@@ -37,7 +37,7 @@ This runs `../ebike-battery-configurator/web/build_static.py` with that project'
 - Don't edit files in `configurator/` here, because the next publish overwrites them. Change them
   in the configurator project instead.
 - `spoke-length-calculator/` works the same way: it comes from the
-  [spoke-calculator](https://github.com/DubPFrye/spoke-calculator) repo, whose `publish.yml`
+  [spoke-length-calculator](https://github.com/DubPFrye/spoke-length-calculator) repo, whose `publish.yml`
   copies its page files here on every push to its `main` (same `WEBSITE_REPO` / `WEBSITE_TOKEN`
   setup). Change it there, not here.
 
