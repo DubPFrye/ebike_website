@@ -36,12 +36,17 @@ This runs `../ebike-battery-configurator/web/build_static.py` with that project'
   secret set in that repo). You can also run `sync_configurator.py` and commit the result by hand.
 - Don't edit files in `configurator/` here, because the next publish overwrites them. Change them
   in the configurator project instead.
+- `spoke-calculator/` works the same way: it comes from the
+  [spoke-calculator](https://github.com/DubPFrye/spoke-calculator) repo, whose `publish.yml`
+  copies its page files here on every push to its `main` (same `WEBSITE_REPO` / `WEBSITE_TOKEN`
+  setup). Change it there, not here.
 
 ## Files
 
 - `index.html`, `styles.css`: the landing page. It keeps the `#parts`, `#about` and `#contact`
   sections, because the configurator's header links to them (`../#parts`, ...).
 - `configurator/`: the built configurator (generated).
+- `spoke-calculator/`: the spoke length calculator (copied in from its own repo).
 - `server.py`: local static server (standard library only).
 - `sync_configurator.py`: rebuilds `configurator/` from the configurator project.
 - `CNAME`, `.nojekyll`: GitHub Pages settings.
