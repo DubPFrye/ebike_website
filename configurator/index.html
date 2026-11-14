@@ -9,6 +9,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&display=swap">
 <link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 <style>
   .app { padding: 48px 0 80px; }
   .app .wrap { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
@@ -37,6 +43,25 @@
   .preview .cell { fill: color-mix(in srgb, var(--accent) 22%, var(--surface)); stroke: color-mix(in srgb, var(--accent) 60%, transparent); stroke-width: 1.5; }
   .preview .group { fill: none; stroke: var(--muted); stroke-opacity: .35; stroke-dasharray: 3 3; }
   .preview .lbl { fill: var(--muted); font-size: 11px; font-family: inherit; }
+  .preview[hidden], .viewer[hidden] { display: none; }
+
+  .view-tabs { display: inline-flex; gap: 2px; padding: 3px; margin: 0 0 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+  .view-tabs button { font: inherit; font-size: .88rem; font-weight: 600; padding: 6px 14px; border: 0; border-radius: 7px; background: none; color: var(--muted); cursor: pointer; }
+  .view-tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+  .view-tabs button[hidden] { display: none; }
+  .viewer { position: relative; aspect-ratio: 16 / 9; min-height: 260px; background: var(--bg); border-radius: 10px; border: 1px solid var(--line); overflow: hidden; touch-action: none; }
+  .viewer canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  .viewer canvas:active { cursor: grabbing; }
+  .viewer.stale canvas { opacity: .25; }
+  .viewer .tools { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; align-items: center; }
+  .viewer .tools button, .viewer .tools label { font: inherit; font-size: .82rem; font-weight: 600; padding: 5px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--text); cursor: pointer; display: flex; gap: 6px; align-items: center; }
+  .viewer .tools input { margin: 0; accent-color: var(--accent); }
+  .viewer .tools .explode { cursor: default; }
+  .viewer .tools .explode input { width: 90px; cursor: pointer; }
+  @media (max-width: 600px) { .viewer .tools { flex-wrap: wrap; justify-content: flex-end; left: 10px; } }
+  .viewer .help { position: absolute; left: 12px; bottom: 8px; margin: 0; font-size: .78rem; color: var(--muted); pointer-events: none; }
+  @media (max-width: 600px) { .viewer { aspect-ratio: 4 / 3; } }
 
   .status { border-radius: 10px; padding: 12px 14px; margin: 0 0 14px; font-size: .92rem; }
   .status ul { margin: 6px 0 0; padding-left: 1.2em; }
@@ -166,7 +191,19 @@
           <div class="status warn" id="engineStatus">Loading the configurator…</div>
           <div class="status error" id="errors" hidden></div>
           <div class="status warn" id="warnings" hidden></div>
-          <div class="preview" id="preview" role="img" aria-label="Top-down drawing of the cell layout"></div>
+          <div class="view-tabs" role="tablist" aria-label="Pack view">
+            <button role="tab" id="tab3d" aria-selected="true" aria-controls="view3d">3D view</button>
+            <button role="tab" id="tabCells" aria-selected="false" aria-controls="preview">Cell layout</button>
+          </div>
+          <div class="viewer" id="view3d" role="tabpanel" aria-labelledby="tab3d" aria-label="3D view of the assembled pack; drag to rotate">
+            <div class="tools">
+              <label class="explode">Exploded <input type="range" id="explode" min="0" max="1" step="0.01" value="0" aria-label="Exploded view amount"></label>
+              <label><input type="checkbox" id="seeThrough" checked> See-through</label>
+              <button type="button" id="resetView">Reset view</button>
+            </div>
+            <p class="help">Drag to rotate · scroll or pinch to zoom · right-drag to pan</p>
+          </div>
+          <div class="preview" id="preview" role="tabpanel" aria-labelledby="tabCells" aria-label="Side-on drawing of the cell layout" hidden></div>
         </div>
 
         <div class="panel">
@@ -235,10 +272,39 @@
 </footer>
 
 <script src="engine.js"></script>
+<script type="module" src="viewer.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const el = { cell: $("cell"), series: $("series"), parallel: $("parallel"), pitch: $("pitch"), base: $("baseplate"), front: $("front"), rear: $("rear") };
 let cells = {}, seq = 0, timer = null;
+let viewer = null, lastAssembly = null;
+
+// 3D view (viewer.js, a module that loads three.js from the CDN after this script runs)
+window.addEventListener("packviewer-ready", () => {
+  viewer = PackViewer.mount($("view3d"));
+  $("seeThrough").addEventListener("change", e => viewer.setSeeThrough(e.target.checked));
+  $("resetView").addEventListener("click", () => viewer.resetView());
+  $("explode").addEventListener("input", e => viewer.setExplode(Number(e.target.value)));
+  viewer.setExplode(Number($("explode").value));
+  if (lastAssembly) viewer.setAssembly(lastAssembly);
+});
+function no3d() {            // no WebGL, or three.js did not load: fall back to the cell layout
+  $("tab3d").hidden = true;
+  showView("cells");
+}
+window.addEventListener("packviewer-failed", no3d);
+window.addEventListener("load", () => { if (!window.PackViewer) no3d(); });
+
+function showView(which) {
+  const is3d = which === "3d";
+  $("tab3d").setAttribute("aria-selected", is3d);
+  $("tabCells").setAttribute("aria-selected", !is3d);
+  $("view3d").hidden = !is3d;
+  $("preview").hidden = is3d;
+  if (is3d && viewer) viewer.resize();
+}
+$("tab3d").addEventListener("click", () => showView("3d"));
+$("tabCells").addEventListener("click", () => showView("cells"));
 
 const fmt = (n, d = 1) => Number(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
 const unit = (v, u) => `${v} <small>${u}</small>`;
@@ -287,6 +353,11 @@ function render(r) {
   showList($("errors"), "This pack can't be built yet:", r.errors);
   showList($("warnings"), "Manufacturing notes:", r.warnings);
   $("preview").innerHTML = drawPack(c.series, c.parallel, c.pitch, cells[c.cell].diameter_mm);
+  $("view3d").classList.toggle("stale", !r.ok);    // keep the last good pack, dimmed
+  if (r.ok) {
+    lastAssembly = r.assembly;
+    if (viewer) viewer.setAssembly(r.assembly);
+  }
 
   const s = r.specs;
   $("vNom").innerHTML = unit(fmt(s.nominal_v), "V");
