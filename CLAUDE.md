@@ -82,7 +82,11 @@ This repo is `DubPFrye/fryepower-com` (renamed from `ebike_website`; GitHub redi
 
 ## Git habits
 
-- Work on a feature branch and open a PR to `main`. Don't push straight to `main` unless asked.
+- Day-to-day work happens on the `working` branch. Commit and push there, then open a PR from
+  `working` to `main` to go live. Before starting new work, bring `working` up to date with
+  `main`. Don't push straight to `main` unless asked.
+- A cloud session may be set up on its own branch (e.g. `add-...-xxxxxx`). Use `working`
+  instead unless the owner says otherwise, and don't leave extra branches behind.
 - Fetch before pushing. Changing the custom domain in the Pages settings makes GitHub commit
   to `CNAME` itself (it has done "Delete CNAME" / "Create CNAME"), so `main` can move without
   anyone pushing. After rebasing, check `CNAME` still says `fryepower.com`.
