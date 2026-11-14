@@ -50,18 +50,20 @@
   .view-tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
   .view-tabs button[hidden] { display: none; }
   .viewer { position: relative; aspect-ratio: 16 / 9; min-height: 260px; background: var(--bg); border-radius: 10px; border: 1px solid var(--line); overflow: hidden; touch-action: none; }
-  .viewer canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  /* absolute, so the canvas pixel size can never widen the panel */
+  .viewer canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: grab; }
   .viewer canvas:active { cursor: grabbing; }
   .viewer.stale canvas { opacity: .25; }
-  .viewer .tools { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; align-items: center; }
+  .viewer .tools { position: absolute; z-index: 1; top: 10px; right: 10px; display: flex; gap: 8px; align-items: center; }
   .viewer .tools button, .viewer .tools label { font: inherit; font-size: .82rem; font-weight: 600; padding: 5px 10px; border-radius: 8px;
     border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--text); cursor: pointer; display: flex; gap: 6px; align-items: center; }
   .viewer .tools input { margin: 0; accent-color: var(--accent); }
   .viewer .tools .explode { cursor: default; }
   .viewer .tools .explode input { width: 90px; cursor: pointer; }
   @media (max-width: 600px) { .viewer .tools { flex-wrap: wrap; justify-content: flex-end; left: 10px; } }
-  .viewer .help { position: absolute; left: 12px; bottom: 8px; margin: 0; font-size: .78rem; color: var(--muted); pointer-events: none; }
-  @media (max-width: 600px) { .viewer { aspect-ratio: 4 / 3; } }
+  .viewer .help { position: absolute; z-index: 1; left: 12px; bottom: 8px; margin: 0; font-size: .78rem; color: var(--muted); pointer-events: none; }
+  /* no min-height here: with the aspect ratio it would force a width wider than a phone screen */
+  @media (max-width: 600px) { .viewer { aspect-ratio: 4 / 3; min-height: 0; } }
 
   .status { border-radius: 10px; padding: 12px 14px; margin: 0 0 14px; font-size: .92rem; }
   .status ul { margin: 6px 0 0; padding-left: 1.2em; }
@@ -169,10 +171,6 @@
             <input id="parallel" type="range" min="1" max="12" value="4">
             <p class="hint">Sets the capacity and how much current the pack can supply.</p>
           </div>
-          <div class="field">
-            <label for="pitch">Cell holder spacing</label>
-            <select id="pitch"></select>
-          </div>
         </div>
         <div class="panel">
           <h2>Mounting</h2>
@@ -216,6 +214,7 @@
             <div class="spec"><dt>Max continuous</dt><dd id="amps"></dd></div>
             <div class="spec"><dt>Cell count</dt><dd id="count"></dd></div>
             <div class="spec"><dt>Cell weight</dt><dd id="weight"></dd></div>
+            <div class="spec"><dt>Cell holder spacing</dt><dd id="pitch"></dd></div>
             <div class="spec wide"><dt>Enclosure (length × height × width)</dt><dd id="size"></dd></div>
           </dl>
           <p class="note">Electrical figures are typical cell datasheet values (placeholder cell data). They don't include the BMS, nickel strip, enclosure or wiring.</p>
@@ -275,7 +274,7 @@
 <script type="module" src="viewer.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const el = { cell: $("cell"), series: $("series"), parallel: $("parallel"), pitch: $("pitch"), base: $("baseplate"), front: $("front"), rear: $("rear") };
+const el = { cell: $("cell"), series: $("series"), parallel: $("parallel"), base: $("baseplate"), front: $("front"), rear: $("rear") };
 let cells = {}, seq = 0, timer = null;
 let viewer = null, lastAssembly = null;
 
@@ -313,7 +312,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 function choices() {
   return {
     cell: el.cell.value, series: +el.series.value, parallel: +el.parallel.value,
-    pitch: +el.pitch.value, base_plate: el.base.checked,
+    base_plate: el.base.checked,
     base_front_mm: +el.front.value, base_rear_mm: +el.rear.value,
   };
 }
@@ -352,7 +351,7 @@ function render(r) {
   $("packTitle").textContent = `Pack layout: ${r.name}`;
   showList($("errors"), "This pack can't be built yet:", r.errors);
   showList($("warnings"), "Manufacturing notes:", r.warnings);
-  $("preview").innerHTML = drawPack(c.series, c.parallel, c.pitch, cells[c.cell].diameter_mm);
+  $("preview").innerHTML = drawPack(c.series, c.parallel, r.specs.cell_pitch_mm, cells[c.cell].diameter_mm);
   $("view3d").classList.toggle("stale", !r.ok);    // keep the last good pack, dimmed
   if (r.ok) {
     lastAssembly = r.assembly;
@@ -367,6 +366,7 @@ function render(r) {
   $("amps").innerHTML = unit(fmt(s.max_continuous_a, 0), "A");
   $("count").innerHTML = unit(s.cells, "cells");
   $("weight").innerHTML = unit(fmt(s.cell_weight_kg, 2), "kg");
+  $("pitch").innerHTML = unit(s.cell_pitch_mm, "mm");
   $("size").innerHTML = r.ok ? unit(r.dims.pack_mm.map(v => Math.round(v)).join(" × "), "mm") : "–";
 
   // One scale for every drawing (relative to the widest part), so sizes compare honestly
@@ -448,12 +448,11 @@ async function init() {
     await Engine.start(status);
     const o = Engine.options();
     for (const c of o.cells) { cells[c.key] = c; el.cell.add(new Option(c.name, c.key)); }
-    for (const p of o.pitches) el.pitch.add(new Option(`${p} mm`, p));
     [el.series.min, el.series.max] = o.limits.series;
     [el.parallel.min, el.parallel.max] = o.limits.parallel;
     const d = o.defaults;
     el.cell.value = d.cell; el.series.value = d.series; el.parallel.value = d.parallel;
-    el.pitch.value = d.pitch; el.front.value = d.base_front_mm; el.rear.value = d.base_rear_mm;
+    el.front.value = d.base_front_mm; el.rear.value = d.base_rear_mm;
     el.base.checked = d.base_plate; syncBase();
   } catch (err) {
     status("");

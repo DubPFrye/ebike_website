@@ -13,7 +13,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 const LOOKS = {
   polycarbonate: { color: 0x3b4248, roughness: 0.45, metalness: 0.0, edges: 0x9aa4ad },
   aluminum: { color: 0xc4c9ce, roughness: 0.4, metalness: 0.2, edges: 0x6b7178 },
-  cell: { color: 0x2f6fb5, roughness: 0.4, metalness: 0.1 },
+  cell: { color: 0x2f6fb5, roughness: 0.3, metalness: 0.1 },           // shrink wrap
+  cell_can: { color: 0xc9ccd0, roughness: 0.35, metalness: 0.2 },      // nickel-plated steel
+  cell_insulator: { color: 0xecebe6, roughness: 0.8, metalness: 0.0 },
   nickel: { color: 0xc9c8bd, roughness: 0.35, metalness: 0.2 },
   abs: { color: 0x1e2124, roughness: 0.8, metalness: 0.0 },
   foam: { color: 0x2a2c2e, roughness: 1.0, metalness: 0.0 },
@@ -134,24 +136,37 @@ class Viewer {
   }
 
   addCylinders(s) {
-    let geom;
-    if (s.inner_radius > 0) {    // tube: an annulus extruded along Z, centered on its length
+    const pieces = [];     // [geometry, material name]
+    if (s.lathe) {         // detailed cell: surfaces of revolution about the axis (assembly.py cell_lathe)
+      for (const part of s.lathe) {
+        const pts = part.profile.map(([r, z]) => new THREE.Vector2(r, z));
+        pieces.push([new THREE.LatheGeometry(pts, 28).rotateX(Math.PI / 2), part.material]);
+      }
+    } else if (s.inner_radius > 0) {    // tube: an annulus extruded along Z, centered on its length
       const ring = new THREE.Shape().absarc(0, 0, s.radius, 0, Math.PI * 2, false);
       ring.holes.push(new THREE.Path().absarc(0, 0, s.inner_radius, 0, Math.PI * 2, true));
-      geom = new THREE.ExtrudeGeometry(ring, { depth: s.length, bevelEnabled: false, curveSegments: 20 });
-      geom.translate(0, 0, -s.length / 2);
+      const geom = new THREE.ExtrudeGeometry(ring, { depth: s.length, bevelEnabled: false, curveSegments: 20 });
+      pieces.push([geom.translate(0, 0, -s.length / 2), s.material]);
     } else {
-      geom = new THREE.CylinderGeometry(s.radius, s.radius, s.length, 28).rotateX(Math.PI / 2);
+      pieces.push([new THREE.CylinderGeometry(s.radius, s.radius, s.length, 28).rotateX(Math.PI / 2), s.material]);
     }
-    const mesh = new THREE.InstancedMesh(geom, this.materials[s.material], s.centers.length);
-    mesh.name = s.name;
-    this.group.add(mesh);
+    const meshes = pieces.map(([geom, mat]) => {
+      const mesh = new THREE.InstancedMesh(geom, this.materials[mat] || this.materials[s.material], s.centers.length);
+      mesh.name = s.name;
+      this.group.add(mesh);
+      return mesh;
+    });
     const offs = offsets(s, s.centers.length), m = new THREE.Matrix4();
     this.movers.push({ apply: t => {
-      s.centers.forEach(([x, y, z], i) =>
-        mesh.setMatrixAt(i, m.makeTranslation(x + offs[i].x * t, y + offs[i].y * t, z + offs[i].z * t)));
-      mesh.instanceMatrix.needsUpdate = true;
-      mesh.computeBoundingSphere();
+      s.centers.forEach(([x, y, z], i) => {
+        if (s.flip && s.flip[i]) m.makeRotationX(Math.PI); else m.identity();   // flipped: positive toward -Z
+        m.setPosition(x + offs[i].x * t, y + offs[i].y * t, z + offs[i].z * t);
+        for (const mesh of meshes) mesh.setMatrixAt(i, m);
+      });
+      for (const mesh of meshes) {
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.computeBoundingSphere();
+      }
     } });
   }
 
